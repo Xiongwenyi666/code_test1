@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <style>
+        #chatbox {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Chat</h1>
+    <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" placeholder="Enter your username">
+        <button onclick="connectToWebSocket()">Connect</button>
+    </div>
+    <div>
+        <input type="text" id="message" placeholder="Enter your message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <div id="chatbox"></div>
+  
+    <script>  
+        let ws;
+  
+        function connectToWebSocket() {
+            const usernameInput = document.getElementById('username');
+            const username = usernameInput.value;
+  
+            if (!username) {
+                alert('Please enter a username.');
+                return;
+            }
+  
+            ws = new WebSocket(`ws://localhost:8000/ws/${username}`);
+  
+            ws.onopen = () => {
+                console.log('Connected to WebSocket server.');
+                ws.send(username); // Send the username to the server
+            };
+  
+            ws.onmessage = (event) => {
+                const message = event.data;
+                displayMessage(message);
+            };
+  
+            ws.onerror = (error) => {
+                console.error('WebSocket Error: ', error);
+            };
+  
+            ws.onclose = (event) => {
+                if (event.wasClean) {
+                    console.log('Connection closed cleanly, code:', event.code, 'reason:', event.reason);
+                } else {
+                    console.error('Connection died');
+                }
+            };
+        }
+  
+        function sendMessage() {  
+            const messageInput = document.getElementById('message');
+            const my_username =  document.getElementById('username').value; 
+            const message = messageInput.value;
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(message);
+                messageInput.value = '';
+                displayMessage(`${my_username}(Me): ${message}`);
+            } else {
+                alert('WebSocket is not connected.');
+            }
+        }
+  
+        function displayMessage(message) {
+            const chatbox = document.getElementById('chatbox');
+            const messageElement = document.createElement('p');
+            messageElement.textContent = message;
+            chatbox.appendChild(messageElement);
+            chatbox.scrollTop = chatbox.scrollHeight; // Scroll to bottom
+        }
+    </script>
+</body>
+</html>
